@@ -87,31 +87,46 @@ def find_homography(kp1, kp2, matches):
 
 
 def combine_images(img1, img2, H):
-    h1, w1 = img1.shape[:2]
-    h2, w2 = img2.shape[:2]
+    """ Функция объединяет два изображения (img1 и img2) в панораму с
+         использованием матрицы гомографии H, которая описывает преобразование между ними. """
+
+    h1, w1 = img1.shape[:2]  # h1(height), w1(weight) – высота и ширина 1-го изображения.
+    h2, w2 = img2.shape[:2]  # h2, w2 – высота и ширина 2-го изображения
 
     corners = np.float32([[0, 0], [0, h2], [w2, h2], [w2, 0]]).reshape(-1, 1, 2)
+    # создание массива, содержащего координаты четырех углов изображения img2 в виде точек с плавающей точкой. (для perspectiveTransform)
+
     warped_corners = cv2.perspectiveTransform(corners, H)
+    # Применяем матрицу гомографии H к углам img2
 
     all_corners = np.concatenate((warped_corners,
                                   np.float32([[0, 0], [w1, 0], [0, h1], [w1, h1]]).reshape(-1, 1, 2)),
-                                 axis=0)
+                                 axis=0)  # Объединяем преобразованные углы img2 с углами img1
 
     [x_min, y_min] = np.int32(np.min(all_corners, axis=(0, 1)) - 1)
     [x_max, y_max] = np.int32(np.max(all_corners, axis=(0, 1)) + 1)
+    # вычисление границ панорамы
 
     translation = np.array([[1, 0, -x_min],
                             [0, 1, -y_min],
                             [0, 0, 1]])
+    # создание матрицы трансляции
 
     warped_img2 = cv2.warpPerspective(img2, translation.dot(H),
                                       (x_max - x_min, y_max - y_min))
+    # Применение преобразования к img2
 
     panorama = np.zeros((y_max - y_min, x_max - x_min, 3), dtype=np.uint8)
+    # Создание пустого полотна для панорамы
+
     panorama[-y_min:h1 - y_min, -x_min:w1 - x_min] = img1
+    # Размещение img1 в панораме
 
     mask = warped_img2 > 0
+    # Создание маски для warped_img2
+
     panorama[mask] = warped_img2[mask]
+    # Наложение warped_img2 на панораму
 
     return panorama
 
@@ -145,7 +160,7 @@ def stitch_images(images):
 
 if __name__ == "__main__":
     images = []
-    for img_path in sorted(glob.glob('input0/*.JPG')): # Считываем изображения из указанной директории
+    for img_path in sorted(glob.glob('own/test1/*.JPG')): # Считываем изображения из указанной директории
         img = cv2.imread(img_path)
         if img is not None:
             images.append(img)
