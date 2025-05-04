@@ -43,7 +43,6 @@ def detect_and_describe(image):
 
     return kp, des
 
-
 def match_descriptors(des1, des2):
     """ Функция использует метод Brute-Force Matcher
             На вход поступают два дескриптора (локальная область точки) : первый дескриптор с первой картинки, второй - со второй.
@@ -58,12 +57,9 @@ def match_descriptors(des1, des2):
     В самом конце возвращается список из “хороших” дескрипторов."""
 
     for m, n in matches:
-       if m.distance < 0.8 * n.distance:
+       if m.distance < 0.6 * n.distance: 
            good.append(m)
     return good
-
-
-
 
 def find_homography(kp1, kp2, matches):
     """ find_homography ищет матрицу гомографии ( матрицу 3х3, которая отображает точки
@@ -82,9 +78,8 @@ def find_homography(kp1, kp2, matches):
     """
     src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
-    H, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+    H, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 15.0)
     return H
-
 
 def combine_images(img1, img2, H):
     """ Функция объединяет два изображения (img1 и img2) в панораму с
@@ -130,7 +125,6 @@ def combine_images(img1, img2, H):
 
     return panorama
 
-
 def stitch_images(images):
     if len(images) < 1: # Обрабатка случая, когда нет изображений
         return None
@@ -157,10 +151,9 @@ def stitch_images(images):
 
     return result
 
-
 if __name__ == "__main__":
     images = []
-    for img_path in sorted(glob.glob('own/test1/*.JPG')): # Считываем изображения из указанной директории
+    for img_path in sorted(glob.glob('test/*.JPG')): # Считываем изображения из указанной директории
         img = cv2.imread(img_path)
         if img is not None:
             images.append(img)
